@@ -1,7 +1,10 @@
-# MyReads Project Iteration 9/28/2017
+# MyReads Udacity React Project
 
-Swapped state-hardcoded routing into using React Router DOM in order to give the user the
-use of the back button, as well as to make pages bookmark-able.
+This is the first project for the Udacity React Nanodegree.  It involves simple
+React fundamentals such as setting state and managing components and properties.
+This is currently being used as a stepping stone to get into more advanced React
+projects in the near future.
 
-Removed anchor tags, replaced with `<Link>` tags.  Checks of state were replaced with `<Route>` tags.  Entire
-app in `index.js` wrapped with `<BrowserRouter>` tag.
+To run this application, simply clone to your machine, `cd` into the directory,
+and use `npm install` to get the required node modules.  Then, use `npm start` to
+open the application.
