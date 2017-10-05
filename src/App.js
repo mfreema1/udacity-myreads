@@ -3,6 +3,7 @@ import {Route, Link} from 'react-router-dom'
 import * as BooksAPI from './BooksAPI'
 import './App.css'
 
+//starting example library
 var startingBookSet = [
   {
     title: "1776",
@@ -50,7 +51,21 @@ var startingBookSet = [
 
 class BooksApp extends React.Component {
 
+  state = {
+    booksInLibrary : startingBookSet
+  }
+
+  //method passed down into the book dropdown.  Updates state of the library according to what was passed back up.
+  updateStore = (updatedBook) => {
+    var bookOfInterest = this.state.booksInLibrary.filter(book => book.url === updatedBook.url)[0]
+    var indexOfInterest = this.state.booksInLibrary.indexOf(bookOfInterest)
+    this.state.booksInLibrary[indexOfInterest].section = updatedBook.section
+    this.setState({booksInLibrary: this.state.booksInLibrary})
+  }
+
   render() {
+
+    //@returns the entire application
     return (
         <div className="app">
           <Route path="/search" render={() => (
@@ -61,7 +76,7 @@ class BooksApp extends React.Component {
               {/* <SearchReults /> */}
             </div>
           </div>
-        )}/> {/*end of first route*/}
+        )}/>
           <Route exact path="/" render={() => (
             <div className="list-books">
               <div className="list-books-title">
@@ -69,58 +84,65 @@ class BooksApp extends React.Component {
               </div>
               <div className="list-books-content">
                 <div>
-                  <Section headerText="Currently Reading" sectionName="Currently Reading"/>
-                  <Section headerText="Want to Read" sectionName="Want to Read"/>
-                  <Section headerText="Read" sectionName="Read"/>
+                  <Section sectionName="Currently Reading" update={this.updateStore}/>
+                  <Section sectionName="Want to Read" update={this.updateStore}/>
+                  <Section sectionName="Read" update={this.updateStore}/>
                 </div>
               </div>
               <div className="open-search">
                 <Link to={{pathname: '/search'}}>Add a book</Link>
               </div>
             </div>
-          )}/>{/*end of second route*/}
+          )}/>
         </div>
     )
   }
 }
 
-class Book extends React.Component {
-
-  state = {
-    section: ""
-  }
-
-  render() {
-    return (
-      //@return: a book item to be displayed
-      <li>
-        <div className="book">
-          <div className="book-top">
-            <div className="book-cover" style={{ width: 128, height: 192, backgroundImage: 'url(' + this.props.url + ')' }}></div>
-            <BookDropdown selection={this.props.section}/>
-          </div>
-          <div className="book-title">{this.props.title}</div>
-          <div className="book-authors">{this.props.authors}</div>
-        </div>
-      </li>
-    )
-  }
-}
+const Book = (props) => (
+  //@return a book in the application.  Only has render() function, so was
+  //reduced to a functional component
+  <li>
+    <div className="book">
+      <div className="book-top">
+        <div className="book-cover" style={{ width: 128, height: 192, backgroundImage: 'url(' + props.url + ')' }}></div>
+        <BookDropdown update={props.update} bookUrl={props.url} section={props.sectionName}/>
+      </div>
+      <div className="book-title">{props.title}</div>
+      <div className="book-authors">{props.authors}</div>
+    </div>
+  </li>
+)
 
 class BookDropdown extends React.Component {
 
-  render() {
+  //passes data up to the application for state changes
+  handleUpdate = (select) => {
+    var currentBook = document.getElementById(this.props.bookUrl)
+    var bookForUpdate = {
+      section: currentBook.options[currentBook.selectedIndex].value,
+      url: this.props.bookUrl
+    }
+    this.props.update(bookForUpdate)
+  }
 
+  //sets the selector to the correct entry for that section
+  componentDidMount() {
+    var selector = document.getElementById(this.props.bookUrl)
+    selector.value = this.props.sectionName
+  }
+
+  render() {
     return (
-      //@return: a dropwdown menu that is on each book in the app.  These values
-      //only occur here, so hardcoding them is fine.
+      //@return: a dropwdown menu that is on each book in the app.  id is
+      //represented by url as a quick way to get unique id's.
         <div className="book-shelf-changer">
-          <select>
-            <option value="none" disabled>Move to...</option>
-            <option value="currentlyReading">Currently Reading</option>
-            <option value="wantToRead">Want to Read</option>
-            <option value="read">Read</option>
-            <option value="none">None</option>
+          <select id={this.props.bookUrl} onChange={this.handleUpdate.bind(this)}>
+            <option value="None" disabled>Move to...</option>
+            <option value="Currently Reading">Currently Reading</option>
+            <option value="Want to Read">Want to Read</option>
+            <option value="Read">Read</option>
+            <option value="None">None</option>
           </select>
         </div>
     )
@@ -128,33 +150,21 @@ class BookDropdown extends React.Component {
 }
 
 class Section extends React.Component {
+
   render() {
+    var booksInSection = startingBookSet.filter(book => book.section === this.props.sectionName).map(book =>
+      <Book title={book.title} authors={book.authors} url={book.url} update={this.props.update} sectionName={this.props.sectionName}/>)
+
     return (
-      //@return: one of the three sections of the MyReads app
+      //@return: one of the three sections of the app.  Each section gets a filtered
+      //copy of the main
       <div className="bookshelf">
-        <h2 className="bookshelf-title">{this.props.headerText}</h2>
-        <ListOfBooks sectionName={this.props.sectionName}/>
-      </div>
-    )
-  }
-}
-
-class ListOfBooks extends React.Component {
-
-  state = {
-    books : startingBookSet.filter(book => book.section === this.props.sectionName)
-  }
-
-  render() {
-    var booksInSection = this.state.books.map(book =>
-      <Book title={book.title} authors={book.authors} url={book.url} section={book.section}/>)
-
-    return (
-      //@return: set of books filtered for the particular section
-      <div className="bookshelf-books">
-        <ol className="books-grid">
-          {booksInSection}
-        </ol>
+        <h2 className="bookshelf-title">{this.props.sectionName}</h2>
+        <div className="bookshelf-books">
+          <ol className="books-grid">
+            {booksInSection}
+          </ol>
+        </div>
       </div>
     )
   }
